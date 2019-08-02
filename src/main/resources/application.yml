@@ -1,0 +1,71 @@
+#Jpa配置
+spring:
+  application: shardingsphere
+  jpa:
+    database: mysql
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+
+#分库分表以及数据源配置
+sharding:
+  jdbc:
+    datasource:
+      names: master0,master0slave0,master0slave1,master1,master2
+
+      master0:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/database0?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8&useSSL=false
+        username: root
+        password: root
+      master0slave0:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/database0_slave0?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8&useSSL=false
+        username: root
+        password: root
+      master0slave1:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/database0_slave1?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8&useSSL=false
+        username: root
+        password: root
+
+      master1:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/database1?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8&useSSL=false
+        username: root
+        password: root
+
+      master2:
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/database2?serverTimezone=UTC&useUnicode=true&characterEncoding=UTF-8&useSSL=false
+        username: root
+        password: root
+
+    config:
+      sharding:
+        default-data-source-name: master0
+        default-database-strategy:
+          inline:
+            sharding-column: goods_id
+            algorithm-expression: master$->{goods_id % 3}
+        tables:
+          goods:
+            actual-data-nodes: master$->{0..2}.goods_$->{0..1}
+            table-strategy:
+              inline:
+                sharding-column: goods_type
+                algorithm-expression: goods_$->{goods_type % 2}
+            key-generator:
+              column: goods_id
+              type: SNOWFLAKE
+
+#        master-slave-rules:
+#          ds:
+#            master-data-source-name: master0
+#            slave-data-source-names: master0slave0,master0slave1
+#            load-balance-algorithm-type: round_robin
